@@ -1,0 +1,43 @@
+char fSet[] = {0,1,0,1,...}
+
+float maxAccuracy = ...;
+unsigned int maxIndex;
+
+// {0,0,0,...}
+
+
+//forward selection
+for(int i = 1; i < featureSetLn; ++i){
+    if(fSet[i] == 0){
+        fSet = 1;
+
+        ...
+
+        if(maxAccuracy < currAccuracy){
+            maxIndex = i;
+            maxAccuracy = currAccuracy;
+        }
+
+        fSet[i] = 0;
+    }
+
+}
+
+//Backward elimination
+for(int i = 1; i < featureSetLn; ++i){
+    if(fSet[i] == 1){
+        fSet = 0;
+
+        ...
+
+        if(maxAccuracy < currAccuracy){
+            maxIndex = i;
+            maxAccuracy = currAccuracy;
+        }
+
+        fSet[i] = 1;
+    }
+
+}
+
+//Optional Algorithm
