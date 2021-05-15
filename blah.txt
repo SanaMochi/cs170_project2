@@ -9,7 +9,7 @@ unsigned int maxIndex;
 //forward selection
 for(int i = 1; i < featureSetLn; ++i){
     if(fSet[i] == 0){
-        fSet = 1;
+        fSet[i] = 1;
 
         ...
 
@@ -26,7 +26,7 @@ for(int i = 1; i < featureSetLn; ++i){
 //Backward elimination
 for(int i = 1; i < featureSetLn; ++i){
     if(fSet[i] == 1){
-        fSet = 0;
+        fSet[i] = 0;
 
         ...
 
