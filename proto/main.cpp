@@ -11,7 +11,7 @@ struct obj{
 };
 
 int evaluation(obj*) {return ( rand() % 1000 ) + 1;}
-std::vector<obj>* dataPreprocessing(std::fstream&); 
+std::vector<obj>* dataPreprocessing(std::fstream&, int); 
 std::vector<int8_t> feature_search(std::vector<obj>*, int, int8_t); // {0,1,0,1,0,1,0} -> features {1, 3, 5} ; {0,0,1,1,0,0,1} -> features {2,3,6}
 
 int8_t getFeatureAlg(); 
@@ -23,13 +23,13 @@ int main() {
     std::cout << "Welcome to Urban's Feature Selection Algorithm\n\n";
     int featureSetLength = getFeatureSetLength(); std::cout << std::endl;
     std::cout << "Type in the name of the file to test: ";
-    /* --> ask for number of features <-- */
     std::cin >> file_name; std::cout << std::endl;
     
     std::fstream dataFile (file_name.c_str(), std::fstream::in);
     if( dataFile.is_open() ){
         std::cout << ">>Opened " << file_name << std::endl;
-        std::vector<obj>* dataSet = dataPreprocessing(dataFile);
+        
+        std::vector<obj>* dataSet = dataPreprocessing(dataFile, featureSetLength);
         int8_t choice_1 = getFeatureAlg();
 
         std::vector<int8_t> feature_set = feature_search(dataSet, featureSetLength, choice_1);
@@ -45,16 +45,16 @@ int main() {
     return 0;
 }
 
-std::vector<int8_t> feature_search(std::vector<obj>* a, int b, int8_t c) {
+std::vector<int8_t> feature_search(std::vector<obj>* dataSet, int fSetLength, int8_t choice) {
     std::cout << ">>Entered Feature Search.\n\n";
     std::vector<int8_t> fSet;
     double maxAccuracy = 0;
 
-    if(c == 0 || c == 1){
-        fSet = std::vector<int8_t> (b+1, c);
+    if(choice == 0 || choice == 1){ // we can combine the algorithms for Foward Select and Backward Elim. using <choice> to flip the required variables
+        fSet = std::vector<int8_t> (fSetLength+1, choice);
 
-        maxAccuracy = evaluation(nullptr) / 10.0;
-        if(c == 0) {
+        maxAccuracy = evaluation(nullptr) / 10.0; // maxAccuracy = evaluation(dataSet);
+        if(choice == 0) {
             std::cout << "Using no features and \"random\" evaluation, accuracy is " << std::setprecision(3) << maxAccuracy << "%\n\n";
         }
         else {
@@ -68,10 +68,10 @@ std::vector<int8_t> feature_search(std::vector<obj>* a, int b, int8_t c) {
         while(maxIndex != 0){
             maxIndex = 0;
             for(unsigned int i = 1; i < fSet.size(); ++i){
-                if(fSet[i] == c){
-                    fSet[i] = (c+1)%2;
+                if(fSet[i] == choice){
+                    fSet[i] = (choice+1)%2; // if 1 -> flip to 0 ; if 0 -> flip to 1
 
-                    currAccuracy = evaluation(nullptr) / 10.0;
+                    currAccuracy = evaluation(nullptr) / 10.0; // currAccuracy = evaluation(dataSet);
 
                     std::cout << "Using feature(s) {";
                     for(unsigned int j = 1; j < fSet.size(); ++j){
@@ -83,11 +83,11 @@ std::vector<int8_t> feature_search(std::vector<obj>* a, int b, int8_t c) {
                         maxIndex = i;
                         maxAccuracy = currAccuracy;
                     }
-                    fSet[i] = c;
+                    fSet[i] = choice; // flip back
                 }
             }
             if(maxIndex != 0){
-                fSet[maxIndex] = (c+1)%2;
+                fSet[maxIndex] = (choice+1)%2;
 
                 std::cout << "\nFeature set {";
                 for(unsigned int j = 1; j < fSet.size(); ++j){
@@ -109,14 +109,14 @@ std::vector<int8_t> feature_search(std::vector<obj>* a, int b, int8_t c) {
         for(unsigned int j = 1; j < fSet.size(); ++j){
             if(fSet[j] == 1){ std::cout << j << ',';}
         }
-        std::cout << "\b} which has an acurracy of " << std::setprecision(3) << maxAccuracy << "%\n";
+        std::cout << "\b} which has an accuracy of " << std::setprecision(3) << maxAccuracy << "%\n";
     } else {
-        std::cout << "Finished search!! The best feature subset has no features which has an acurracy of " << std::setprecision(3) << maxAccuracy << "%\n";
+        std::cout << "Finished search!! The best feature subset has no features which has an accuracy of " << std::setprecision(3) << maxAccuracy << "%\n";
     }
     return fSet;
 }
 
-std::vector<obj>* dataPreprocessing(std::fstream& fs) {
+std::vector<obj>* dataPreprocessing(std::fstream& fs, int fSetLength) {
     /* std::vector<obj>* dataSet;
     obj hold;
     std::stringstream input;
