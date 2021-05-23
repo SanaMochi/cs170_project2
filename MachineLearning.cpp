@@ -2,24 +2,51 @@
 
 //===CLASSIFIER===========================================================================================
 
-Classifier::Classifier(unsigned int K = 0, unsigned int numNN = 1) : k_Size(K), numNearestNeighbors(numNN) {}
+Classifier::Classifier(unsigned int K = 0, unsigned int numNN = 1) : k_Size(K), numNearestNeighbors(numNN) {
+    this->trainingSet = nullptr;
+}
 void Classifier::setK(unsigned int num) {this->k_Size = num;}
 void Classifier::setNumNN(unsigned int num) {this->numNearestNeighbors = num;}
+void Classifier::setFeatureSet(std::vector<int8_t>& fSet) {this->featureSet = fSet;}
 void Classifier::Train(std::vector<obj>& trSet) {
     this->trainingSet = &trSet;
 }
-uint32_t Classifier::Test(uint32_t test_obj_index) { //pain
+uint32_t Classifier::Test(uint32_t test_obj_index = 0) { //pain
     uint32_t classification = 0;
+    std::vector<obj*> nearestNeighbors (this->numNearestNeighbors, nullptr);
+    long double euclidianDistance;
 
-    /* for(size_t currObj = 0; currObj < this->trainingSet->size(); ++currObj){
-        if(currObj < test_obj_index && currObj > test_obj_index + this->k_Size ){
-
-            for(unsigned int f_i = 0; ){}
-
+    if(this->trainingSet){
+        for(size_t ObjIndex = 0; ObjIndex < this->trainingSet->size(); ++ObjIndex){
+            euclidianDistance = 0;
+            if(ObjIndex < test_obj_index && ObjIndex > test_obj_index + k_Size){
+                for(size_t fIndex = 1; fIndex < this->featureSet.size(); ++fIndex){
+                    if(this->featureSet[fIndex] == 1){
+                        euclidianDistance += std::pow( this->trainingSet->at(test_obj_index).data[fIndex] - this->trainingSet->at(ObjIndex).data[fIndex] , 2 ); 
+                    }
+                }
+                euclidianDistance = std::sqrtl( euclidianDistance );
+                // push current ObjIndex to a list of NN if applicable -------------------------- TODO: IMPLEMENT NEAREST NEIGHBORS LIST BEHAVIOR
+                // pop previous largest ObjIndex if needed
+            }
         }
-    } */
+
+        std::vector<int32_t> classCounter /*(maxClassNum, 0)*/;
+        for(unsigned int i = 0; i < this->numNearestNeighbors; ++i){
+            size_t currIndex = nearestNeighbors[i]->classification - 1;
+            ++classCounter[currIndex];
+            if(classification < classCounter[currIndex]){
+                classification = currIndex;
+            }
+        }
+    }
 
     return classification;
+}
+double Classifier::commonClassPercentage() {
+    double ccRatio = 0;
+    /* ... */
+    return ccRatio;
 }
 
 
@@ -88,7 +115,7 @@ void MachineLearning::feature_search(int8_t choice) {
     if(choice == 0 || choice == 1){ // we can combine the algorithms for Foward Select and Backward Elim. using <choice> to flip the required variables
         this->featureSet = std::vector<int8_t> (fSetLength+1, choice);
 
-        maxAccuracy = evaluation();
+        maxAccuracy = evaluation(); //currAccuracy = Vali.validate(this->featureSet);
 
         if(choice == 0) {
             std::cout << "Using no features and \"random\" evaluation, accuracy is " << std::setprecision(3) << maxAccuracy << "%\n\n";
@@ -107,7 +134,7 @@ void MachineLearning::feature_search(int8_t choice) {
                 if(this->featureSet[i] == choice){
                     this->featureSet[i] = (choice+1)%2; // if 1 -> flip to 0 ; if 0 -> flip to 1
 
-                    currAccuracy = evaluation();
+                    currAccuracy = evaluation(); //currAccuracy = Vali.validate(this->featureSet);
 
                     std::cout << "Using feature(s) {" << printFeatures(featureSet) << "} accuracy is " << std::setprecision(3) << currAccuracy << "%\n";
 

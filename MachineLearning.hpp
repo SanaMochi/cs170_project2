@@ -18,15 +18,19 @@ struct obj {
 class Classifier {
     public:
         Classifier(unsigned int K, unsigned int numNN); //K -> K means size ; Root -> set of identies to ignore and the K objs right after them
-        void Train(std::vector<obj>& trSet); 
+        void Train(std::vector<obj>& trSet); //set trainingSet to point to Machine Learning's dataSet
         uint32_t Test(uint32_t test_obj_index); //returns classification
-        void setK(unsigned int); //change K size
-        void setNumNN(unsigned int); //set max number of Nearest Neighbors to check
+        void setK(unsigned int); //change K size -- K default to 0 (in essence acts like 1)
+        void setNumNN(unsigned int); //set max number of Nearest Neighbors to check -- numNN default to 1
+        void setFeatureSet(std::vector<int8_t>& fSet); //set featureSet to passed in fSet
+        // VVV For when there are no features enabled in the Feature Set VVV
+        double commonClassPercentage(); //returns the ratio of the most common class to the total data set
     private:
         unsigned int numNearestNeighbors;
         unsigned int k_Size; //number of objs reserved from dataSet to be used for testing
         std::vector<obj>* trainingSet; //pointer to dataSet - assuming that dataSet does not change //Should classifier have this instead of ML?
         //std::vector<obj> dataSet;
+        std::vector<int8_t> featureSet;
 };
 
 class Validator {
