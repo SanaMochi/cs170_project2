@@ -7,25 +7,31 @@
 #include <iomanip>
 #include <string>
 #include <sstream>
+#include <cmath>
 
-struct obj{
-    uint64_t id;
-    uint64_t classification;
+struct obj {
+    uint32_t id;
+    uint32_t classification;
     std::vector<double> data;
 };
 
 class Classifier {
     public:
-        Classifier();
-        void Train();
-        uint64_t Test();
-
-        /* Some way to store the testing data */
+        Classifier(unsigned int K, unsigned int numNN); //K -> K means size ; Root -> set of identies to ignore and the K objs right after them
+        void Train(std::vector<obj>& trSet); 
+        uint32_t Test(uint32_t test_obj_index); //returns classification
+        void setK(unsigned int); //change K size
+        void setNumNN(unsigned int); //set max number of Nearest Neighbors to check
+    private:
+        unsigned int numNearestNeighbors;
+        unsigned int k_Size; //number of objs reserved from dataSet to be used for testing
+        std::vector<obj>* trainingSet; //pointer to dataSet - assuming that dataSet does not change //Should classifier have this instead of ML?
+        //std::vector<obj> dataSet;
 };
 
 class Validator {
     public:
-        Validator();
+        double validate(std::vector<int8_t>& fSet);
 };
 
 class MachineLearning {
@@ -35,11 +41,12 @@ class MachineLearning {
         void DataFromFile(std::fstream&);
         void feature_search(int8_t);
         void setFeatureSetLen(unsigned int);
+        void printDataSetToFile(const std::string&);
     private:
         double evaluation();
         void normalizeData();
-        Classifier* Clas;
-        Validator* Vali;
+        Classifier Clas;
+        Validator Vali;
         std::string printFeatures(std::vector<int8_t>&);
         std::vector<int8_t> featureSet;
         unsigned int fSetLength;

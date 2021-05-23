@@ -26,6 +26,7 @@ int main() {
     if( dataFile.is_open() ){
         ML.DataFromFile(dataFile);
         dataFile.close();
+        ML.printDataSetToFile( string("Test_Norm.txt") );
 
         int8_t choice_1 = getFeatureAlg();
         ML.feature_search(choice_1);

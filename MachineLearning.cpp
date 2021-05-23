@@ -1,9 +1,33 @@
 #include "MachineLearning.hpp"
 
-Classifier::Classifier() {}
+//===CLASSIFIER===========================================================================================
 
-Validator::Validator() {}
+Classifier::Classifier(unsigned int K = 0, unsigned int numNN = 1) : k_Size(K), numNearestNeighbors(numNN) {}
+void Classifier::setK(unsigned int num) {this->k_Size = num;}
+void Classifier::setNumNN(unsigned int num) {this->numNearestNeighbors = num;}
+void Classifier::Train(std::vector<obj>& trSet) {
+    this->trainingSet = &trSet;
+}
+uint32_t Classifier::Test(uint32_t test_obj_index) { //pain
+    uint32_t classification = 0;
 
+    /* for(size_t currObj = 0; currObj < this->trainingSet->size(); ++currObj){
+        if(currObj < test_obj_index && currObj > test_obj_index + this->k_Size ){
+
+            for(unsigned int f_i = 0; ){}
+
+        }
+    } */
+
+    return classification;
+}
+
+
+//===VALIDATOR============================================================================================
+
+double Validator::validate(std::vector<int8_t>& fSet) {}
+
+//===MACHINE=LEARNING=====================================================================================
 MachineLearning::MachineLearning() {}
 MachineLearning::~MachineLearning() {}
 
@@ -14,7 +38,7 @@ void MachineLearning::DataFromFile(std::fstream& fs) {
     obj hold;
     std::stringstream input;
     std::string line;
-    uint64_t IDincrement = 0;
+    uint32_t IDincrement = 0;
 
     while( std::getline(fs, line) ){
         input.str(line); line = "";
@@ -28,6 +52,33 @@ void MachineLearning::DataFromFile(std::fstream& fs) {
         this->dataSet.push_back(hold);
         input.clear(); input.str();
         hold.data.clear();
+    }
+
+    //normalizeData();
+}
+
+void MachineLearning::normalizeData() { // Likely wrong; Needs changes
+    long double mean, variance, stdDev;
+
+    // [(x - x*) / stdDev_x*]
+
+    for(unsigned int f_i = 0; f_i < this->fSetLength; ++f_i){
+        mean = 0;
+        for(uint32_t obj_i = 0; obj_i < this->dataSet.size(); ++obj_i){
+            mean += this->dataSet[obj_i].data[f_i];
+        }
+        mean = mean / this->dataSet.size();
+
+        variance = 0;
+        for(uint32_t obj_i = 0; obj_i < this->dataSet.size(); ++obj_i){
+            variance += std::pow(this->dataSet[obj_i].data[f_i] - mean, 2);
+        }
+        variance = variance / this->dataSet.size();
+
+        stdDev = std::sqrt( variance );
+        for(uint32_t obj_i = 0; obj_i < this->dataSet.size(); ++obj_i){
+            this->dataSet[obj_i].data[f_i] = (this->dataSet[obj_i].data[f_i] - mean) / stdDev;
+        }
     }
 }
 
@@ -98,4 +149,24 @@ std::string MachineLearning::printFeatures(std::vector<int8_t>& fSet){
     }
 
     return str_fList;
+}
+
+void MachineLearning::printDataSetToFile(const std::string& str){
+    std::ofstream oF (str.c_str(), std::ofstream::out);
+
+    if( oF.is_open() ){
+        for(uint32_t obj_i = 0; obj_i < this->dataSet.size(); ++obj_i){
+            oF << '(' << this->dataSet[obj_i].id << ") [" << this->dataSet[obj_i].classification << "] ";
+            oF.precision(7);
+            for(unsigned int f_i = 0; f_i < this->fSetLength; ++f_i){
+                oF << std::scientific <<  this->dataSet[obj_i].data[f_i] << " ";
+            }
+            oF << std::endl;
+        }
+
+        oF.close();
+    }
+    else{
+        std::cout << "Could not print to file.\n";
+    }
 }
