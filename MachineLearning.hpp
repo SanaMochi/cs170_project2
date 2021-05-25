@@ -8,6 +8,8 @@
 #include <string>
 #include <sstream>
 #include <cmath>
+#include <queue>
+#include <map>
 
 struct obj {
     uint32_t id;
@@ -17,7 +19,7 @@ struct obj {
 
 class Classifier {
     public:
-        Classifier(unsigned int K, unsigned int numNN); //K -> K means size ; Root -> set of identies to ignore and the K objs right after them
+        Classifier(unsigned int K, unsigned int numNN); //K -> K means size ; numNN -> set the number of nearest Neighbors
         void Train(std::vector<obj>& trSet); //set trainingSet to point to Machine Learning's dataSet
         uint32_t Test(uint32_t test_obj_index); //returns classification
         void setK(unsigned int); //change K size -- K default to 0 (in essence acts like 1)
@@ -25,6 +27,7 @@ class Classifier {
         void setFeatureSet(std::vector<int8_t>& fSet); //set featureSet to passed in fSet
         // VVV For when there are no features enabled in the Feature Set VVV
         double commonClassPercentage(); //returns the ratio of the most common class to the total data set
+        size_t size();
     private:
         unsigned int numNearestNeighbors;
         unsigned int k_Size; //number of objs reserved from dataSet to be used for testing

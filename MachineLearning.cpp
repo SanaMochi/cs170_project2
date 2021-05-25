@@ -2,40 +2,59 @@
 
 //===CLASSIFIER===========================================================================================
 
+//--For-Classifier's-Test()--------------------------------------------
+struct objEuc_Pair {
+    objEuc_Pair(obj* a, long double b) : data_Obj(a), euc(b) {}
+    obj* data_Obj;
+    long double euc;
+};
+class objEuc_Compare {
+    public:
+        bool operator() (const objEuc_Pair& lhs, const objEuc_Pair& rhs) {
+            return lhs.euc < rhs.euc;
+        }
+};
+
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 Classifier::Classifier(unsigned int K = 0, unsigned int numNN = 1) : k_Size(K), numNearestNeighbors(numNN) {
     this->trainingSet = nullptr;
 }
 void Classifier::setK(unsigned int num) {this->k_Size = num;}
 void Classifier::setNumNN(unsigned int num) {this->numNearestNeighbors = num;}
 void Classifier::setFeatureSet(std::vector<int8_t>& fSet) {this->featureSet = fSet;}
-void Classifier::Train(std::vector<obj>& trSet) {
-    this->trainingSet = &trSet;
-}
+size_t Classifier::size(){return this->trainingSet->size();}
+void Classifier::Train(std::vector<obj>& trSet) {this->trainingSet = &trSet;}
 uint32_t Classifier::Test(uint32_t test_obj_index = 0) { //pain
     uint32_t classification = 0;
-    std::vector<obj*> nearestNeighbors (this->numNearestNeighbors, nullptr);
+    std::priority_queue<long double, std::vector<objEuc_Pair>, objEuc_Compare> nearestNeighbors;
     long double euclidianDistance;
 
-    if(this->trainingSet){
+    if(this->trainingSet->size()){
         for(size_t ObjIndex = 0; ObjIndex < this->trainingSet->size(); ++ObjIndex){
             euclidianDistance = 0;
-            if(ObjIndex < test_obj_index && ObjIndex > test_obj_index + k_Size){
+            if(ObjIndex < test_obj_index || ObjIndex > test_obj_index + k_Size){
                 for(size_t fIndex = 1; fIndex < this->featureSet.size(); ++fIndex){
                     if(this->featureSet[fIndex] == 1){
-                        euclidianDistance += std::pow( this->trainingSet->at(test_obj_index).data[fIndex] - this->trainingSet->at(ObjIndex).data[fIndex] , 2 ); 
+                        euclidianDistance += std::pow( this->trainingSet->at(test_obj_index).data[fIndex-1] - this->trainingSet->at(ObjIndex).data[fIndex-1] , 2 ); 
                     }
                 }
-                euclidianDistance = std::sqrtl( euclidianDistance );
-                // push current ObjIndex to a list of NN if applicable -------------------------- TODO: IMPLEMENT NEAREST NEIGHBORS LIST BEHAVIOR
-                // pop previous largest ObjIndex if needed
+                euclidianDistance = std::sqrt( euclidianDistance );
+
+                nearestNeighbors.push( objEuc_Pair( &this->trainingSet->at(ObjIndex), euclidianDistance) );
+                if(nearestNeighbors.size() > numNearestNeighbors){
+                    nearestNeighbors.pop();
+                }
             }
         }
-
-        std::vector<int32_t> classCounter /*(maxClassNum, 0)*/;
-        for(unsigned int i = 0; i < this->numNearestNeighbors; ++i){
-            size_t currIndex = nearestNeighbors[i]->classification - 1;
-            ++classCounter[currIndex];
-            if(classification < classCounter[currIndex]){
+        std::map<uint32_t, size_t> classCounter;
+        classCounter.insert( std::pair<uint32_t, size_t>(0, 0));
+        for(unsigned int i = 0; i < nearestNeighbors.size(); ++i){
+            size_t currIndex = nearestNeighbors.top().data_Obj->classification;
+            if(classCounter.insert( std::pair<uint32_t, size_t>(currIndex, 1) ).second == false){
+                ++classCounter.at(currIndex);
+            }
+            if(classCounter[classification] < classCounter[currIndex]){
                 classification = currIndex;
             }
         }
@@ -45,7 +64,27 @@ uint32_t Classifier::Test(uint32_t test_obj_index = 0) { //pain
 }
 double Classifier::commonClassPercentage() {
     double ccRatio = 0;
-    /* ... */
+    size_t dataSet_SIZE = this->trainingSet->size();
+    
+    if(dataSet_SIZE > 0) {
+
+        std::map<int32_t, size_t> classCounter;
+        uint32_t classification = 0;
+        obj* currObj = nullptr;
+        for(size_t i = 0; i < dataSet_SIZE; ++i){
+            currObj = &trainingSet->at(i);
+            if(classCounter.insert( std::pair<int32_t, size_t>(currObj->classification, 1) ).second == false){
+                ++classCounter.at(currObj->classification);
+            }
+            if(classCounter[classification] < classCounter[currObj->classification]){
+                classification = currObj->classification;
+            }
+        }
+
+
+        ccRatio = (1.0 * classCounter[classification]) / dataSet_SIZE;
+    }
+
     return ccRatio;
 }
 
@@ -110,6 +149,7 @@ void MachineLearning::normalizeData() { // Likely wrong; Needs changes
 }
 
 void MachineLearning::feature_search(int8_t choice) {
+    this->Clas.Train(this->dataSet);
     double maxAccuracy = 0;
 
     if(choice == 0 || choice == 1){ // we can combine the algorithms for Foward Select and Backward Elim. using <choice> to flip the required variables
