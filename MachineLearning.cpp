@@ -17,11 +17,13 @@ class objEuc_Compare {
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-Classifier::Classifier(unsigned int K = 0, unsigned int numNN = 1) : k_Size(K), numNearestNeighbors(numNN) {
+Classifier::Classifier(unsigned int K, unsigned int numNN) : k_Size(K), numNearestNeighbors(numNN) {
     this->trainingSet = nullptr;
 }
 void Classifier::setK(unsigned int num) {this->k_Size = num;}
+unsigned int Classifier::getK() {return this->k_Size;}
 void Classifier::setNumNN(unsigned int num) {this->numNearestNeighbors = num;}
+unsigned int Classifier::getNumNN() {return this->numNearestNeighbors;}
 void Classifier::setFeatureSet(std::vector<int8_t>& fSet) {this->featureSet = fSet;}
 size_t Classifier::size(){return this->trainingSet->size();}
 void Classifier::Train(std::vector<obj>& trSet) {this->trainingSet = &trSet;}
@@ -91,7 +93,35 @@ double Classifier::commonClassPercentage() {
 
 //===VALIDATOR============================================================================================
 
-double Validator::validate(std::vector<int8_t>& fSet) {}
+double Validator::validate(std::vector<int8_t>& fSet, Classifier& clas) {
+    double acc = 0;
+    size_t numTestCorrect = 0;
+
+    bool hasFeatures = false;
+    for(size_t i = 1; i < fSet.size(); ++i){
+        if(fSet[i] == 1){
+            hasFeatures = true;
+            break;
+        }
+    }
+
+    if(!hasFeatures){
+        acc = clas.commonClassPercentage();
+    }
+    else{
+        clas.setFeatureSet(fSet);
+        for(uint32_t i = 0; i < clas.size(); ++i){
+            uint32_t holdClass = clas.Test(i);
+            if(this->dataSet->at(i).classification == holdClass){
+                ++numTestCorrect;
+            }
+        }
+        acc = ( 1.0 * numTestCorrect) / clas.size();
+    }
+
+    return acc * 100;
+}
+void Validator::setDataSet(std::vector<obj>& dSet) {this->dataSet = &dSet;}
 
 //===MACHINE=LEARNING=====================================================================================
 MachineLearning::MachineLearning() {}
@@ -99,8 +129,16 @@ MachineLearning::~MachineLearning() {}
 
 double MachineLearning::evaluation() {return ( ( rand() % 1000 ) + 1) / 10.0;}
 void MachineLearning::setFeatureSetLen(unsigned int a){fSetLength = a;}
+size_t MachineLearning::dataSet_size(){return this->dataSet.size();}
+void MachineLearning::attachTimer(timer& t){this->t = &t;}
+std::string MachineLearning::time(){
+    if(this->t){ 
+        return this->t->time();
+    }
+    return "";
+}
 
-void MachineLearning::DataFromFile(std::fstream& fs) {
+void MachineLearning::loadDataFromFile(std::fstream& fs) {
     obj hold;
     std::stringstream input;
     std::string line;
@@ -119,11 +157,9 @@ void MachineLearning::DataFromFile(std::fstream& fs) {
         input.clear(); input.str();
         hold.data.clear();
     }
-
-    //normalizeData();
 }
 
-void MachineLearning::normalizeData() { // Likely wrong; Needs changes
+void MachineLearning::normalize() {
     long double mean, variance, stdDev;
 
     // [(x - x*) / stdDev_x*]
@@ -150,20 +186,24 @@ void MachineLearning::normalizeData() { // Likely wrong; Needs changes
 
 void MachineLearning::feature_search(int8_t choice) {
     this->Clas.Train(this->dataSet);
+    this->Vali.setDataSet(this->dataSet);
     double maxAccuracy = 0;
 
     if(choice == 0 || choice == 1){ // we can combine the algorithms for Foward Select and Backward Elim. using <choice> to flip the required variables
         this->featureSet = std::vector<int8_t> (fSetLength+1, choice);
 
-        maxAccuracy = evaluation(); //currAccuracy = Vali.validate(this->featureSet);
+        maxAccuracy = Vali.validate(this->featureSet, this->Clas);
 
+        
         if(choice == 0) {
-            std::cout << "Using no features and \"random\" evaluation, accuracy is " << std::setprecision(3) << maxAccuracy << "%\n\n";
+            std::cout << time() << "Using no features and most-common-classification evaluation, accuracy is " << std::setprecision(3) << maxAccuracy << "%\n\n";
         }
         else {
-            std::cout << "Using all features and \"random\" evaluation, accuracy is " << std::setprecision(3) << maxAccuracy << "%\n\n";
+            std::cout << time() << "Using all features and most-common-classification evaluation, accuracy is " << std::setprecision(3) << maxAccuracy << "%\n\n";
         }
-        std::cout << "Beginning search.\n\n";
+        std::cout << time() << "Beginning search\n"
+                            << "\t    >> K-Clustering size: " << this->Clas.getK() + 1 << "\n"
+                            << "\t    >> Number of Nearest Neighbors: " << this->Clas.getNumNN() << "\n\n";
 
         double currAccuracy;
         unsigned int maxIndex = 1;
@@ -174,9 +214,9 @@ void MachineLearning::feature_search(int8_t choice) {
                 if(this->featureSet[i] == choice){
                     this->featureSet[i] = (choice+1)%2; // if 1 -> flip to 0 ; if 0 -> flip to 1
 
-                    currAccuracy = evaluation(); //currAccuracy = Vali.validate(this->featureSet);
+                    currAccuracy = Vali.validate(this->featureSet, this->Clas);
 
-                    std::cout << "Using feature(s) {" << printFeatures(featureSet) << "} accuracy is " << std::setprecision(3) << currAccuracy << "%\n";
+                    std::cout << time() << "Using feature(s) {" << printFeatures(featureSet) << "} accuracy is " << std::setprecision(3) << currAccuracy << "%\n";
 
                     if(maxAccuracy < currAccuracy){
                         maxIndex = i;
@@ -187,10 +227,10 @@ void MachineLearning::feature_search(int8_t choice) {
             }
             if(maxIndex != 0){
                 this->featureSet[maxIndex] = (choice+1)%2;
-                std::cout << "\nFeature set {" << printFeatures(featureSet) << "} was best, accuracy is " << std::setprecision(3) << maxAccuracy << "%\n\n";
+                std::cout << std::endl << time() << "Feature set {" << printFeatures(featureSet) << "} was best, accuracy is " << std::setprecision(3) << maxAccuracy << "%\n\n";
             }
             else{
-                std::cout << "\n(Warning, Accuracy has decreased!)\n";
+                std::cout << std::endl << time() << "(Warning, Accuracy has decreased!)\n";
             }
         }
     }
@@ -199,9 +239,9 @@ void MachineLearning::feature_search(int8_t choice) {
     }
 
     if(featureSet.size() > 1){
-        std::cout << "Finished search!! The best feature subset is {" << printFeatures(featureSet) << "} which has an accuracy of " << std::setprecision(3) << maxAccuracy << "%\n";
+        std::cout << time() << "Finished search!! The best feature subset is {" << printFeatures(featureSet) << "} which has an accuracy of " << std::setprecision(3) << maxAccuracy << "%\n";
     } else {
-        std::cout << "Finished search!! The best feature subset has no features which has an accuracy of " << std::setprecision(3) << maxAccuracy << "%\n";
+        std::cout << time() << "Finished search!! The best feature subset has no features which has an accuracy of " << std::setprecision(3) << maxAccuracy << "%\n";
     }
 }
 

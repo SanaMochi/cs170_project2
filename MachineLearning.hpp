@@ -11,6 +11,8 @@
 #include <queue>
 #include <map>
 
+#include "timer.hpp"
+
 struct obj {
     uint32_t id;
     uint32_t classification;
@@ -19,11 +21,13 @@ struct obj {
 
 class Classifier {
     public:
-        Classifier(unsigned int K, unsigned int numNN); //K -> K means size ; numNN -> set the number of nearest Neighbors
+        Classifier(unsigned int K = 0, unsigned int numNN = 1); //K -> K means size ; numNN -> set the number of nearest Neighbors
         void Train(std::vector<obj>& trSet); //set trainingSet to point to Machine Learning's dataSet
         uint32_t Test(uint32_t test_obj_index); //returns classification
         void setK(unsigned int); //change K size -- K default to 0 (in essence acts like 1)
+        unsigned int getK();
         void setNumNN(unsigned int); //set max number of Nearest Neighbors to check -- numNN default to 1
+        unsigned int getNumNN();
         void setFeatureSet(std::vector<int8_t>& fSet); //set featureSet to passed in fSet
         // VVV For when there are no features enabled in the Feature Set VVV
         double commonClassPercentage(); //returns the ratio of the most common class to the total data set
@@ -38,26 +42,33 @@ class Classifier {
 
 class Validator {
     public:
-        double validate(std::vector<int8_t>& fSet);
+        double validate(std::vector<int8_t>& fSet, Classifier&);
+        void setDataSet(std::vector<obj>& dSet);
+    private:
+        std::vector<obj>* dataSet;
 };
 
 class MachineLearning {
     public:
         MachineLearning();
         ~MachineLearning();
-        void DataFromFile(std::fstream&);
+        void loadDataFromFile(std::fstream&);
         void feature_search(int8_t);
         void setFeatureSetLen(unsigned int);
         void printDataSetToFile(const std::string&);
+        void normalize();
+        size_t dataSet_size();
+        void attachTimer(timer&);
+        std::string time();
     private:
         double evaluation();
-        void normalizeData();
         Classifier Clas;
         Validator Vali;
         std::string printFeatures(std::vector<int8_t>&);
         std::vector<int8_t> featureSet;
         unsigned int fSetLength;
         std::vector<obj> dataSet;
+        timer* t = nullptr;
 };
 
 #endif

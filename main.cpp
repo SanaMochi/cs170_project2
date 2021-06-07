@@ -15,26 +15,36 @@ int main() {
     MachineLearning ML;
 
     cout << "Welcome to Rudy and Sana's Feature Selection Algorithm\n\n";
-    int8_t fSetLen = getFeatureSetLength();
+    unsigned int fSetLen = getFeatureSetLength();
     ML.setFeatureSetLen( fSetLen ); cout << endl;
 
     string file_name;
     cout << "Type in the name of the file to test: ";
     cin >> file_name; cout << endl;
+
+    int8_t choice_1 = getFeatureAlg();
     
+    timer t; cout << "Opening " << file_name << ".\n";
     fstream dataFile (file_name.c_str(), fstream::in);
     if( dataFile.is_open() ){
-        ML.DataFromFile(dataFile);
-        dataFile.close();
-        ML.printDataSetToFile( string("Test_Norm.txt") );
 
-        int8_t choice_1 = getFeatureAlg();
+        cout << t.time() << "Gathering data from " << file_name << ".\n";
+        ML.loadDataFromFile(dataFile);
+        dataFile.close();
+
+        cout << t.time() << "Normalizing " << ML.dataSet_size() << " data entries.\n";
+        ML.normalize();
+        //cout << t.time() << "Print data set to \"Test_Norm.txt\".\n"
+        //ML.printDataSetToFile( string("Test_Norm.txt") );
+        cout << t.time() << "Complete.\n\n";
+        cout << t.time() << "Entering Feature Search with " << fSetLen << " features.\n";
+
+        ML.attachTimer(t);
         ML.feature_search(choice_1);
 
-        /* ... */
     }
     else{
-        cout << ">>Cannot find or open \"" << file_name << "\" in current directory.\n";
+        cerr << t.time() << ">>Cannot find or open \"" << file_name << "\" in current directory.\n";
     }
 
     return 0;
