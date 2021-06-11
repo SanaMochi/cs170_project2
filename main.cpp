@@ -34,14 +34,16 @@ int main() {
 
         cout << t.time() << "Normalizing " << ML.dataSet_size() << " data entries.\n";
         ML.normalize();
-        //cout << t.time() << "Print data set to \"Test_Norm.txt\".\n"
-        //ML.printDataSetToFile( string("Test_Norm.txt") );
+        cout << t.time() << "Print data set to \"Test_Norm.txt\".\n";
+        ML.printDataSetToFile( string("Test_Norm.txt") );
         cout << t.time() << "Complete.\n\n";
         cout << t.time() << "Entering Feature Search with " << fSetLen << " features.\n";
 
         ML.attachTimer(t);
         ML.feature_search(choice_1);
 
+        size_t found = file_name.find_last_of(".");
+        ML.plot(file_name.substr(found-2,2));
     }
     else{
         cerr << t.time() << ">>Cannot find or open \"" << file_name << "\" in current directory.\n";

@@ -60,6 +60,7 @@ class MachineLearning {
         size_t dataSet_size();
         void attachTimer(timer&);
         std::string time();
+        void plot(std::string str = "");
     private:
         double evaluation();
         Classifier Clas;
