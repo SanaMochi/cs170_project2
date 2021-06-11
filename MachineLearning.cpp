@@ -199,7 +199,7 @@ void MachineLearning::feature_search(int8_t choice) {
             std::cout << time() << "Using no features and most-common-classification evaluation, accuracy is " << std::setprecision(3) << maxAccuracy << "%\n\n";
         }
         else {
-            std::cout << time() << "Using all features and most-common-classification evaluation, accuracy is " << std::setprecision(3) << maxAccuracy << "%\n\n";
+            std::cout << time() << "Using all features and leave-" << this->Clas.getK()+1 << "-out evaluation, accuracy is " << std::setprecision(3) << maxAccuracy << "%\n\n";
         }
         std::cout << time() << "Beginning search\n"
                             << "\t    >> K-Clustering size: " << this->Clas.getK() + 1 << "\n"
@@ -218,7 +218,7 @@ void MachineLearning::feature_search(int8_t choice) {
 
                     std::cout << time() << "Using feature(s) {" << printFeatures(featureSet) << "} accuracy is " << std::setprecision(3) << currAccuracy << "%\n";
 
-                    if(maxAccuracy < currAccuracy){
+                    if(maxAccuracy <= currAccuracy){
                         maxIndex = i;
                         maxAccuracy = currAccuracy;
                     }
@@ -275,5 +275,35 @@ void MachineLearning::printDataSetToFile(const std::string& str){
     }
     else{
         std::cout << "Could not print to file.\n";
+    }
+}
+
+void MachineLearning::plot(std::string str) {
+    std::vector<int> hold;
+    for(unsigned i = 1; i < featureSet.size(); ++i){
+        if(this->featureSet[i]){
+            hold.push_back(i);
+        }
+    }
+
+    if(hold.size() == 2){
+        std::ofstream of1 ("class1.csv");
+        std::ofstream of2 ("class2.csv");
+        if(of1.is_open() && of2.is_open()){
+            of1 << "featureONE" << ',' << "featureTWO" << std::endl;
+            of2 << "featureONE" << ',' << "featureTWO" << std::endl;
+            for(size_t i = 0; i < this->dataSet.size(); ++i){
+                auto currObj = this->dataSet[i];
+                if(currObj.classification == 1){
+                    of1 << currObj.data[hold[0]-1] << ',' << currObj.data[hold[1]-1] << std::endl;
+                } else {
+                    of2 << currObj.data[hold[0]-1] << ',' << currObj.data[hold[1]-1] << std::endl;
+                }
+            }
+            of1.close();
+            of2.close();
+            std::string command = "py printPlot.py " + std::to_string(hold[0]) + ' ' + std::to_string(hold[1]) + ' ' + str;
+            system(command.c_str());
+        }
     }
 }
