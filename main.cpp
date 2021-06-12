@@ -2,6 +2,7 @@
 #include <fstream>
 #include <cstdlib>
 #include <string>
+#include <limits.h>
 
 #include "MachineLearning.hpp"
 
