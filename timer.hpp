@@ -13,7 +13,7 @@ class timer {
     public:
         timer() {
             Start = std::chrono::steady_clock::now();
-            std::cout << "[ ELASPED ] ";
+            std::cout << "[ ELAPSED ] ";
         }
         std::string time() {
             std::stringstream output;
